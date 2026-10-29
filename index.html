@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="theme-color" content="#101827">
+
+<title>مرآة | تخيّلها… اصنعها</title>
+
+<style>
+
+*{box-sizing:border-box}
+
+body{margin:0;background:#101827;color:white;font-family:Arial,sans-serif}
+
+header{padding:25px 18px;text-align:center;background:#18243a}
+
+.logo{font-size:38px;font-weight:bold;color:#62e0cb}
+
+h1{margin:10px 0;font-size:22px}
+
+p{color:#c8d1df;line-height:1.8}
+
+main{padding:20px;max-width:650px;margin:auto}
+
+.card{background:#202e46;border:1px solid #344760;border-radius:18px;padding:20px;margin-bottom:15px}
+
+h2{font-size:21px;margin:0 0 12px}
+
+button{background:#62e0cb;color:#101827;border:0;border-radius:12px;padding:13px 20px;font-weight:bold;font-size:16px;cursor:pointer}
+
+textarea{width:100%;min-height:130px;padding:14px;border-radius:12px;background:#101827;color:white;border:1px solid #617087;font-size:16px}
+
+.story{white-space:pre-wrap;line-height:1.9}
+
+small{color:#aebbd0}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">◈ مرآة</div>
+
+<h1>تخيّلها… اصنعها</h1>
+
+<p>عالم يجمع الكُتّاب والقراء وصنّاع الإبداع</p>
+
+</header>
+
+<main>
+
+<div class="card">
+
+<h2>📖 عالم القصص</h2>
+
+<p>اكتشف القصص، واقرأها، وشارك رأيك فيها.</p>
+
+</div>
+
+<div class="card">
+
+<h2>🎬 عالم الفيديو</h2>
+
+<p>مساحة للأعمال المصورة والأفلام القصيرة.</p>
+
+</div>
+
+<div class="card">
+
+<h2>🎙️ عالم الصوت</h2>
+
+<p>استمع إلى القصص بأصوات مبدعيها.</p>
+
+</div>
+
+<div class="card">
+
+<h2>✍️ انشر قصتك</h2>
+
+<textarea id="story" placeholder="اكتب قصتك هنا..."></textarea>
+
+<p><button onclick="publish()">نشر تجريبي</button></p>
+
+<small>هذه تجربة محلية على جهازك، وليست نشرًا عامًا بعد.</small>
+
+</div>
+
+<div class="card" id="published" hidden>
+
+<h2>قصتك التجريبية</h2>
+
+<div class="story" id="output"></div>
+
+</div>
+
+<div class="card">
+
+<h2>✨ استوديو مرآة</h2>
+
+<p>هنا سنضيف لاحقًا أدوات تحويل القصص إلى فيديو بالذكاء الاصطناعي.</p>
+
+</div>
+
+</main>
+
+<script>
+
+function publish(){
+
+ const value=document.getElementById('story').value.trim();
+
+ if(!value){alert('اكتب قصتك أولًا');return;}
+
+ document.getElementById('output').textContent=value;
+
+ document.getElementById('published').hidden=false;
+
+}
+
+</script>
+
+</body>
+
+</html>
