@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مرآة ◈</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0A1124;color:white;font-family:Arial,sans-serif;padding-bottom:85px}
+header{background:#0F1C35;padding:20px;text-align:center;color:#45E1CB;font-size:28px;font-weight:bold}
+main{padding:20px;max-width:700px;margin:auto}
+h1,h2{color:#45E1CB}
+p{color:#a0b8d8;line-height:1.8}
+button{cursor:pointer}
+.btn{background:#45E1CB;color:#0A1124;border:0;border-radius:12px;padding:15px;width:100%;font-size:16px;font-weight:bold;margin:10px 0}
+.card{background:#111D3A;border:1px solid #1E2F55;border-radius:14px;padding:16px;margin:12px 0}
+input,textarea{width:100%;padding:14px;margin:10px 0;background:#0F1C35;border:1px solid #1E2F55;border-radius:10px;color:white;font-size:16px}
+textarea{height:180px}
+nav{position:fixed;bottom:0;right:0;left:0;display:flex;background:#0F1C35;border-top:1px solid #1E2F55}
+nav button{flex:1;background:none;color:#a0b8d8;border:0;padding:12px 2px;font-size:12px}
+nav button.active{color:#45E1CB}
+section{display:none}
+section.active{display:block}
+.story{white-space:pre-wrap;line-height:1.8}
+</style>
+</head>
+<body>
+<header>مرآة ◈</header>
+<main>
+<section id="home" class="active">
+<h1>كل حكاية تستحق أن تُروى</h1>
+<p>احكها... تخيلها... اصنعها</p>
+<p>اكتب قصتك واقرأها في عالم مرآة.</p>
+<button class="btn" onclick="go('write')">ابدأ بكتابة قصة</button>
+<h2>📖 أحدث القصص</h2>
+<div id="latest"></div>
+</section>
+
+<section id="stories">
+<h2>📚 القصص</h2>
+<div id="list"></div>
+</section>
+
+<section id="write">
+<h2>✍️ اكتب قصتك</h2>
+<p>كتابة القصص مجانية وغير محدودة.</p>
+<input id="title" placeholder="عنوان القصة">
+<textarea id="body" placeholder="اكتب قصتك هنا"></textarea>
+<button class="btn" onclick="publish()">نشر القصة</button>
+</section>
+
+<section id="video">
+<h2>🎬 توليد الفيديو</h2>
+<div class="card">
+<p>قريبًا: تحويل قصتك إلى فيديو أنمي مدته 15 ثانية بعلامة مرآة.</p>
+<p>توليد الفيديو غير مفعل في هذه النسخة التجريبية.</p>
+</div>
+</section>
+
+<section id="account">
+<h2>👤 حسابي</h2>
+<div class="card">
+<p>مرحبًا بك في مرآة ◈</p>
+<p>هذه نسخة تجريبية. القصص محفوظة على جهازك فقط.</p>
+</div>
+</section>
+</main>
+
+<nav>
+<button onclick="go('home')">🏠<div>الرئيسية</div></button>
+<button onclick="go('stories')">📚<div>القصص</div></button>
+<button onclick="go('write')">✍️<div>اكتب</div></button>
+<button onclick="go('video')">🎬<div>الفيديو</div></button>
+<button onclick="go('account')">👤<div>حسابي</div></button>
+</nav>
+
+<script>
+const KEY='miraa_stories_web';
+let stories=[];
+try{
+  const saved=JSON.parse(localStorage.getItem(KEY)||'[]');
+  stories=Array.isArray(saved)?saved:[];
+}catch(e){stories=[];}
+
+function go(id){
+ document.querySelectorAll('section').forEach(x=>x.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+ document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+ const names=['home','stories','write','video','account'];
+ const i=names.indexOf(id);
+ if(i>=0)document.querySelectorAll('nav button')[i].classList.add('active');
+ render();
+ window.scrollTo(0,0);
+}
+function publish(){
+ const title=document.getElementById('title').value.trim();
+ const text=document.getElementById('body').value.trim();
+ if(!title||!text){alert('اكتب العنوان والقصة');return;}
+ const item={title,text,date:new Date().toLocaleDateString('ar'),likes:0};
+ const next=[item,...stories];
+ try{
+   localStorage.setItem(KEY,JSON.stringify(next));
+   stories=next;
+ }catch(e){alert('تعذر حفظ القصة');return;}
+ document.getElementById('title').value='';
+ document.getElementById('body').value='';
+ alert('تم حفظ قصتك على هذا الجهاز!');
+ go('stories');
+}
+function renderCards(target,items){
+ const box=document.getElementById(target);
+ box.replaceChildren();
+ if(!items.length){
+   const p=document.createElement('p');
+   p.textContent='لا توجد قصص بعد';
+   box.appendChild(p);
+   return;
+ }
+ items.forEach(story=>{
+   const card=document.createElement('div');
+   card.className='card';
+   const h=document.createElement('h3');
+   h.textContent=story.title;
+   const p=document.createElement('p');
+   p.className='story';
+   p.textContent=story.text;
+   const d=document.createElement('small');
+   d.textContent=story.date||'';
+   card.append(h,p,d);
+   box.appendChild(card);
+ });
+}
+function render(){
+ renderCards('latest',stories.slice(0,5));
+ renderCards('list',stories);
+}
+render();
+</script>
+</body>
+</html>
