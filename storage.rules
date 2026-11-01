@@ -1,0 +1,9 @@
+rules_version = '2';
+service firebase.storage {
+ match /b/{bucket}/o {
+  match /{kind}/{userId}/{fileName} {
+   allow read: if kind in ['covers','videos','audios'];
+   allow write: if request.auth != null && request.auth.uid == userId && kind in ['covers','videos','audios'] && request.resource.size < 30 * 1024 * 1024 && ((kind == 'covers' && request.resource.contentType.matches('image/.*')) || (kind == 'videos' && request.resource.contentType.matches('video/.*')) || (kind == 'audios' && request.resource.contentType.matches('audio/.*')));
+  }
+ }
+}

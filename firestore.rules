@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function signedIn() { return request.auth != null; }
+  function own() { return signedIn() && request.resource.data.authorId == request.auth.uid; }
+  function limitedText(t,n) { return t is string && t.size() <= n; }
+  match /users/{uid} {
+   allow read, create, update, delete: if signedIn() && request.auth.uid == uid;
+  }
+  match /stories/{id} {
+   allow read: if true;
+   allow create: if own() && request.resource.data.keys().hasOnly(['title','body','type','cover','author','authorId','createdAt']) && request.resource.data.type in ['short','novel'] && limitedText(request.resource.data.title,160) && limitedText(request.resource.data.body,100000);
+   allow update, delete: if false;
+  }
+  match /chapters/{id} {
+   allow read: if true;
+   allow create: if own() && request.resource.data.keys().hasOnly(['storyId','number','title','body','authorId','createdAt']) && request.resource.data.number is int && request.resource.data.number > 0 && limitedText(request.resource.data.body,100000) && get(/databases/$(database)/documents/stories/$(request.resource.data.storyId)).data.authorId == request.auth.uid;
+   allow update, delete: if false;
+  }
+  match /comments/{id} {
+   allow read: if true;
+   allow create: if own() && request.resource.data.keys().hasOnly(['kind','target','body','author','authorId','createdAt']) && request.resource.data.kind in ['story','chapter','audio','video'] && limitedText(request.resource.data.body,3000);
+   allow update, delete: if false;
+  }
+  match /{kind}/{id} {
+   allow read: if kind in ['audios','videos','listings'];
+   allow create: if kind in ['audios','videos','listings'] && own() && limitedText(request.resource.data.title,160);
+   allow update, delete: if false;
+  }
+ }
+}
