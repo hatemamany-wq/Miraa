@@ -1,0 +1,1 @@
+{"name": "مرآة — اقرأ واحكي واكسب", "short_name": "مرآة", "start_url": "./", "display": "standalone", "background_color": "#0a1124", "theme_color": "#0a1124", "icons": [{"src": "assets/miraa-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}, {"src": "assets/miraa-logo.jpg", "sizes": "any", "type": "image/jpeg", "purpose": "any"}]}
