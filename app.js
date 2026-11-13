@@ -49,7 +49,7 @@ function commentList(){
  return data.comments.filter(c=>c.kind===kind&&c.target===target).map(c=>`<div class="card"><b>${safe(c.author)}</b> <span class="badge">مشترك</span><p>${safe(c.body)}</p><span class="muted mini">${date(c.createdAt)}</span></div>`).join('')||empty('كن أول من يعلّق');
 }
 function refreshComments(){const node=$('#commentList');if(node)node.innerHTML=commentList()}
-function detail(){if(page==='compose')return `<h2>${storyTab==='short'?'اكتب قصة قصيرة':'اكتب رواية'}</h2><div class="card"><input class="field" id="title" maxlength="160" placeholder="عنوان العمل"><label class="muted" for="shareExcerpt">مقطع تشويقي لبطاقة المشاركة (اختياري)</label><textarea class="field" id="shareExcerpt" maxlength="240" placeholder="اكتب جملة تشد القارئ دون كشف النهاية"></textarea><label class="muted">غلاف العمل (مطلوب)</label><input class="field" id="cover" type="file" accept="image/*" required><textarea class="field" id="body" placeholder="${storyTab==='short'?'نص القصة':'الفصل الأول من الرواية'}"></textarea>${btn('انشر العمل','publishStory')}</div>`;
+function detail(){if(page==='compose')return `<h2>${storyTab==='short'?'اكتب قصة قصيرة':'اكتب رواية'}</h2><div class="card"><input class="field" id="title" maxlength="160" placeholder="عنوان العمل"><label class="muted" for="shareExcerpt">مقطع تشويقي لبطاقة المشاركة (اختياري)</label><textarea class="field" id="shareExcerpt" maxlength="240" placeholder="اكتب جملة تشد القارئ دون كشف النهاية"></textarea><p class="muted">يُستخدم شعار مرآة غلافًا تلقائيًا حاليًا. رفع الأغلفة متوقف مؤقتًا.</p><textarea class="field" id="body" placeholder="${storyTab==='short'?'نص القصة':'الفصل الأول من الرواية'}"></textarea>${btn('انشر العمل','publishStory')}</div>`;
 if(page==='read'){const s=data.stories.find(x=>x.id===arg);if(!s)return empty(storiesLoaded?'العمل غير موجود أو لم يعد متاحًا':'جارٍ تحميل القصة…');const chapters=data.chapters.filter(c=>c.storyId===s.id).sort((a,b)=>a.number-b.number);return `<div class="card"><h2>${safe(s.title)}</h2><p class="muted">${safe(s.author)}</p>${s.type==='novel'?`<h3>فصول الرواية</h3>${chapters.map(c=>`<div class="row" style="padding:8px 0;border-bottom:1px solid #28415c"><span>${safe(c.number)}. ${safe(c.title)}</span>${btn('اقرأ',`chapter:${c.id}`,true)}</div>`).join('')||empty('لم تُنشر فصول بعد')}${user?.uid===s.authorId?`<div class="actions">${btn('＋ أضف فصلًا',`addChapter:${s.id}`)}</div>`:''}`:`<div class="reading">${safe(s.body)}</div>`}<div class="actions">${btn('مشاركة',`share:${s.id}`,true)}${btn('التعليقات',`comments:story:${s.id}`,true)}</div></div>${ad()}`}
 if(page==='chapter'){const c=data.chapters.find(x=>x.id===arg);if(!c)return empty('الفصل غير موجود');return `<div class="card"><h2>${safe(c.title)}</h2><div class="reading">${safe(c.body)}</div>${btn('التعليقات',`comments:chapter:${c.id}`,true)}</div>${ad()}`}
 if(page==='addChapter')return `<h2>إضافة فصل</h2><div class="card"><input class="field" id="chapterTitle" placeholder="عنوان الفصل"><textarea class="field" id="chapterBody" placeholder="نص الفصل"></textarea>${btn('نشر الفصل','publishChapter')}</div>`;
@@ -74,7 +74,20 @@ async function uploadFile(file,folder,contentType=file?.type){
  uploadMessage('اكتمل رفع الملف، جارٍ حفظ المنشور...',100);
  return getDownloadURL(task.snapshot.ref);
 }
-async function publishStory(){if(!need())return;let title=val('title'),body=val('body');if(title.length<3||title.length>160||body.length<15||body.length>100000)return say('اكتب عنوانًا ونصًا مناسبين');try{let file=$('#cover').files[0];if(!file)throw Error('اختر صورة غلاف قبل النشر');let cover;if(file){if(!file.type.startsWith('image/'))throw Error('اختر صورة غلاف');cover=await uploadFile(file,'covers')}let refStory=await addDoc(collection(fire,'stories'),{title,shareExcerpt:val('shareExcerpt').slice(0,240),body:storyTab==='short'?body:'',type:storyTab,cover,author:user.displayName||'كاتب مرآة',authorId:user.uid,createdAt:serverTimestamp()});if(storyTab==='novel')await addDoc(collection(fire,'chapters'),{storyId:refStory.id,number:1,title:'الفصل الأول',body,authorId:user.uid,createdAt:serverTimestamp()});return {storyId:refStory.id}}catch(e){say('تعذر النشر: '+e.message)}}
+async function publishStory(){
+ if(!need())return;
+ if(storyTab==='novel')return say('نشر الروايات متوقف مؤقتًا لحين إصلاح حفظ الفصول. احتفظ بالنص في الملاحظات.');
+ const title=val('title'),body=val('body');
+ if(title.length<3||title.length>160||body.length<15||body.length>100000)return say('العنوان من 3 إلى 160 حرفًا، ونص القصة من 15 إلى 100000 حرف.');
+ try{
+  const refStory=await addDoc(collection(fire,'stories'),{
+   title,shareExcerpt:val('shareExcerpt').slice(0,240),body,type:'short',cover:logo,
+   author:user.displayName||'كاتب مرآة',authorId:user.uid,createdAt:serverTimestamp()
+  });
+  say('تم نشر القصة بنجاح');
+  return {storyId:refStory.id};
+ }catch(e){say('تعذر النشر: '+uploadError(e));}
+}
 async function publishChapter(){if(!need())return;let s=data.stories.find(x=>x.id===arg);if(!s||s.authorId!==user.uid)return say('هذه الرواية ليست ملك حسابك');let title=val('chapterTitle'),body=val('chapterBody');if(!title||body.length<15||body.length>100000)return say('أكمل عنوان الفصل ونصه');try{let num=1+Math.max(0,...data.chapters.filter(c=>c.storyId===s.id).map(c=>c.number||0));await addDoc(collection(fire,'chapters'),{storyId:s.id,number:num,title,body,authorId:user.uid,createdAt:serverTimestamp()});return {storyId:s.id}}catch(e){say(e.message)}}
 async function postComment(){if(!need())return;let body=val('comment');if(body.length<2||body.length>3000)return say('التعليق يجب أن يكون بين حرفين و3000 حرف');let [kind,target]=arg.split(':');try{await addDoc(collection(fire,'comments'),{kind,target,body,author:user.displayName||'عضو مرآة',authorId:user.uid,createdAt:serverTimestamp()});$('#comment').value=''}catch(e){say(e.message)}}
 async function publishOffer(){if(!need())return;let title=val('offerTitle'),description=val('offerDesc'),right=val('offerRight');if(title.length<3||title.length>160||description.length<10||description.length>10000)return say('أكمل بيانات العرض');try{await addDoc(collection(fire,'listings'),{title,description,right,author:user.displayName||'عضو مرآة',authorId:user.uid,createdAt:serverTimestamp()});return {published:true}}catch(e){say(e.message)}}
@@ -137,3 +150,4 @@ function openLinkedStory(){const id=linkedStory();if(!id)return;section='stories
 window.addEventListener('hashchange',openLinkedStory);
 openLinkedStory();
 if(cloud){onAuthStateChanged(auth,u=>{user=u;if(page==='comments')render();else autoRender()});for(let name of Object.keys(data)){let q=query(collection(fire,name),orderBy('createdAt','desc'));unsubs.push(onSnapshot(q,snap=>{if(name==='stories')storiesLoaded=true;data[name]=snap.docs.map(d=>({id:d.id,...d.data()}));autoRender()},e=>{console.error(name,e);if(name==='stories')say('تعذر قراءة قاعدة البيانات. راجع قواعد Firestore.')}))}}render();
+
